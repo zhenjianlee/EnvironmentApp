@@ -1,0 +1,193 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Data.gov.sg APIs",
+    "description": "\"APIs for People\"",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.data.gov.sg/v1"
+    }
+  ],
+  "paths": {
+    "/environment/pm25": {
+      "get": {
+        "summary": "Retrieve the latest PM2.5 information",
+        "description": "- Updated hourly from NEA.\n- Readings are provided for each major region in Singapore\n- The `region_metadata` field in the response provides longitude/latitude information for the regions. You can use that to place the readings on a map.\n- Use the `date_time` parameter to retrieve the latest PM2.5 readings at that moment in time\n- Use the `date` parameter to retrieve all of the readings for that day\n",
+        "tags": ["Environment"],
+        "parameters": [
+          {
+            "name": "date_time",
+            "in": "query",
+            "description": "YYYY-MM-DD[T]HH:mm:ss (SGT)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PM 2.5 Information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "api_info": {
+                      "$ref": "#/components/schemas/ApiInfo"
+                    },
+                    "region_metadata": {
+                      "$ref": "#/components/schemas/RegionMetadataForPsiAndPm25"
+                    },
+                    "items": {
+                      "type": "array",
+                      "description": "Array of items",
+                      "items": {
+                        "$ref": "#/components/schemas/Pm25Information"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiInfo": {
+        "type": "object",
+        "description": "Contains information about the API (from Data.gov.sg)",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["healthy"]
+          }
+        }
+      },
+
+      "Pm25Information": {
+        "type": "object",
+        "properties": {
+          "update_timestamp": {
+            "type": "string",
+            "description": "Time of acquisition of data from NEA",
+            "format": "date-time"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Data timestamp",
+            "format": "date-time"
+          },
+          "readings": {
+            "type": "object",
+            "description": "Regional hourly PM2.5 concentration",
+            "properties": {
+              "pm25_one_hourly": {
+                "$ref": "#/components/schemas/ConcentrationReadingByRegion"
+              }
+            }
+          }
+        }
+      },
+      "ConcentrationReadingByRegion": {
+        "type": "object",
+        "description": "Concentration is measured in micrograms per cubic metre",
+        "properties": {
+          "national": {
+            "type": "number",
+            "description": "Reading for national reporting stations"
+          },
+          "north": {
+            "type": "number",
+            "description": "Reading for north region"
+          },
+          "south": {
+            "type": "number",
+            "description": "Reading for south region"
+          },
+          "east": {
+            "type": "number",
+            "description": "Reading for east region"
+          },
+          "west": {
+            "type": "number",
+            "description": "Reading for west region"
+          },
+          "central": {
+            "type": "number",
+            "description": "Reading for central region"
+          }
+        }
+      },
+      "RegionMetadataForPsiAndPm25": {
+        "type": "array",
+        "description": "Additional information on regions provided",
+        "items": {
+          "type": "object",
+          "required": ["name", "label_location"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the region"
+            },
+            "label_location": {
+              "type": "object",
+              "description": "Provides longitude and latitude for placing readings on a map",
+              "required": ["longitude", "latitude"],
+              "properties": {
+                "longitude": {
+                  "type": "number"
+                },
+                "latitude": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Error information",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
